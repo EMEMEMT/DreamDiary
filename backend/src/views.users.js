@@ -6,7 +6,7 @@ export const usersRouter = Router()
 // 当前用户信息与统计
 usersRouter.get('/me', async (req, res) => {
   const db = await getDb()
-  const user = db.get('SELECT id, email, created_at FROM users WHERE id = ?', req.userId)
+  const user = db.get('SELECT id, email, username, created_at FROM users WHERE id = ?', req.userId)
   const stats = db.get(`
     SELECT 
       (SELECT COUNT(1) FROM dreams d WHERE d.user_id = u.id) as total_dreams,

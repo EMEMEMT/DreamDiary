@@ -31,6 +31,7 @@ function migrate(db) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE,
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -101,6 +102,28 @@ function migrate(db) {
     const hasIsPublic = cols.some(c => c.name === 'is_public')
     if (!hasIsPublic) {
       db.exec(`ALTER TABLE dreams ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0;`)
+    }
+  } catch {}
+
+  // 兼容旧库：users 添加 username 字段（可空以避免历史冲突），并尝试给空值填充占位
+  try {
+    const userCols = db.prepare(`PRAGMA table_info(users)`).all()
+    const hasUsername = userCols.some(c => c.name === 'username')
+    if (!hasUsername) {
+      db.exec(`ALTER TABLE users ADD COLUMN username TEXT;`)
+      // 尝试用邮箱@前缀填充 username（如冲突则忽略）
+      const users = db.prepare(`SELECT id, email FROM users`).all()
+      const used = new Set(db.prepare(`SELECT username FROM users WHERE username IS NOT NULL`).all().map(r => r.username))
+      for (const u of users) {
+        const base = String(u.email || '')
+        const suggestion = base.includes('@') ? base.split('@')[0] : base
+        if (!suggestion) continue
+        let candidate = suggestion
+        let i = 1
+        while (used.has(candidate)) candidate = `${suggestion}${++i}`
+        db.prepare(`UPDATE users SET username = ? WHERE id = ? AND username IS NULL`).run(candidate, u.id)
+        used.add(candidate)
+      }
     }
   } catch {}
 }

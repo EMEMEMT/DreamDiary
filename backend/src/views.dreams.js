@@ -69,7 +69,7 @@ export const publicDreamsRouter = Router()
 publicDreamsRouter.get('/', async (req, res) => {
   const db = await getDb()
   const rows = db.all(`
-    SELECT d.*, u.email as author_email,
+    SELECT d.*, u.email as author_email, u.username as author_username,
       (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
       (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
     FROM dreams d JOIN users u ON u.id = d.user_id
@@ -83,7 +83,7 @@ publicDreamsRouter.get('/', async (req, res) => {
 publicDreamsRouter.get('/:id', async (req, res) => {
   const db = await getDb()
   const d = db.get(`
-    SELECT d.*, u.email as author_email,
+    SELECT d.*, u.email as author_email, u.username as author_username,
       (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
       (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
     FROM dreams d JOIN users u ON u.id = d.user_id

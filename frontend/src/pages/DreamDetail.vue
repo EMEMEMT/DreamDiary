@@ -96,7 +96,7 @@ onMounted(load)
         <ul class="list">
           <li v-for="c in comments" :key="c.id" class="card list-item">
             <div style="display:flex;justify-content:space-between;gap:8px">
-              <span class="muted">{{ c.author_email }} · {{ new Date(c.created_at).toLocaleString() }}</span>
+              <span class="muted">{{ c.author_username || c.author_email }} · {{ new Date(c.created_at).toLocaleString() }}</span>
             </div>
             <div style="margin-top:6px">{{ c.content }}</div>
           </li>

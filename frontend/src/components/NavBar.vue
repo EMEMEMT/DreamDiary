@@ -15,7 +15,7 @@ import { AuthApi } from '../services/api'
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <template v-if="isAuthenticated">
-          <RouterLink :to="{ name: 'profile' }" class="muted" v-if="currentUser?.email">{{ currentUser.email }}</RouterLink>
+          <RouterLink :to="{ name: 'profile' }" class="muted" v-if="currentUser?.username || currentUser?.email">{{ currentUser?.username || currentUser?.email }}</RouterLink>
           <button class="button" @click="AuthApi.logout(); location.href = '/#/login'">退出</button>
         </template>
         <template v-else>

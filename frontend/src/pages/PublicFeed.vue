@@ -36,7 +36,7 @@ onMounted(load)
               <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title || 'Untitled dream' }}</strong>
               <small class="muted">{{ new Date(d.date || d.created_at).toLocaleDateString() }}</small>
             </div>
-            <div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">by {{ d.author_email }} · 赞 {{ d.likes }} · 评论 {{ d.comments }}</div>
+            <div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">by {{ d.author_username || d.author_email }} · 赞 {{ d.likes }} · 评论 {{ d.comments }}</div>
           </div>
           <span class="muted" style="font-size:12px">查看 ›</span>
         </div>

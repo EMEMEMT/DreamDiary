@@ -28,7 +28,7 @@ onMounted(load)
     <p v-if="isLoading" class="muted">加载中...</p>
     <p v-if="errorMessage" style="color:var(--danger)">{{ errorMessage }}</p>
     <div v-if="me" class="card" style="padding:16px;margin-bottom:12px">
-      <div><strong>{{ me.email }}</strong></div>
+      <div><strong>{{ me.username || me.email }}</strong></div>
       <div class="muted">注册于 {{ new Date(me.created_at).toLocaleDateString() }}</div>
       <div class="muted">梦境总数 {{ me.total_dreams }} · 公开 {{ me.public_dreams }}</div>
     </div>

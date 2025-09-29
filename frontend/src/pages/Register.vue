@@ -5,6 +5,7 @@ import { AuthApi } from '../services/api'
 
 const router = useRouter()
 const email = ref('')
+const username = ref('')
 const password = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -13,7 +14,7 @@ async function submit() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    await AuthApi.register({ email: email.value.trim(), password: password.value })
+    await AuthApi.register({ email: email.value.trim(), username: username.value.trim(), password: password.value })
     router.replace({ name: 'dreams' })
   } catch (err) {
     errorMessage.value = err?.message || '注册失败'
@@ -27,6 +28,10 @@ async function submit() {
       <h2 style="margin-top:0">注册</h2>
       <p v-if="errorMessage" style="color:var(--danger)">{{ errorMessage }}</p>
       <form @submit.prevent="submit" style="display:grid;gap:12px">
+        <label>
+          <span class="muted">用户名</span>
+          <input class="input" v-model="username" type="text" placeholder="例如：梦旅人" />
+        </label>
         <label>
           <span class="muted">邮箱</span>
           <input class="input" v-model="email" type="email" placeholder="you@example.com" />
