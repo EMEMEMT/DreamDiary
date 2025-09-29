@@ -14,7 +14,7 @@ async function loadDreams() {
   try {
     dreams.value = await DreamApi.listDreams()
   } catch (err) {
-    errorMessage.value = err?.message || 'Failed to load dreams'
+    errorMessage.value = err?.message || '加载梦境失败'
   } finally {
     isLoading.value = false
   }
@@ -34,11 +34,11 @@ onMounted(loadDreams)
 <template>
   <section class="container">
     <div class="page-header">
-      <h2 style="margin:0">Dreams</h2>
-      <button class="button primary" @click="openNew">New Dream</button>
+      <h2 style="margin:0">我的梦境</h2>
+      <button class="button primary" @click="openNew">新建梦境</button>
     </div>
 
-    <p v-if="isLoading" class="muted">Loading...</p>
+    <p v-if="isLoading" class="muted">加载中...</p>
     <p v-if="errorMessage" style="color:var(--danger)">{{ errorMessage }}</p>
 
     <ul v-if="!isLoading && dreams.length" class="list">
@@ -46,17 +46,17 @@ onMounted(loadDreams)
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
           <div style="min-width:0">
             <div style="display:flex;align-items:center;gap:8px;min-width:0">
-              <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title || 'Untitled dream' }}</strong>
+              <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title || '未命名梦境' }}</strong>
               <small class="muted">{{ new Date(d.date || d.createdAt).toLocaleDateString() }}</small>
             </div>
             <div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.summary || d.content }}</div>
           </div>
-          <span class="muted" style="font-size:12px">View ›</span>
+          <span class="muted" style="font-size:12px">查看 ›</span>
         </div>
       </li>
     </ul>
 
-    <p v-else-if="!isLoading" class="muted">No dreams yet. Create your first one!</p>
+    <p v-else-if="!isLoading" class="muted">还没有梦境，去创建你的第一个吧！</p>
   </section>
   
 </template>

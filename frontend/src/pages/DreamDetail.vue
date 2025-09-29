@@ -27,19 +27,19 @@ async function load() {
     likes.value = likeData?.likes || 0
     comments.value = await CommentsApi.listByDream(id)
   } catch (err) {
-    errorMessage.value = err?.message || 'Failed to load dream'
+    errorMessage.value = err?.message || '加载失败'
   } finally {
     isLoading.value = false
   }
 }
 
 async function removeDream() {
-  if (!confirm('Delete this dream?')) return
+  if (!confirm('确定要删除这条梦境吗？')) return
   try {
     await DreamApi.deleteDream(id)
     router.push({ name: 'dreams' })
   } catch (err) {
-    alert(err?.message || 'Delete failed')
+    alert(err?.message || '删除失败')
   }
 }
 
@@ -68,20 +68,20 @@ onMounted(load)
 
 <template>
   <section class="container">
-    <p v-if="isLoading" class="muted">Loading...</p>
+    <p v-if="isLoading" class="muted">加载中...</p>
     <p v-if="errorMessage" style="color:var(--danger)">{{ errorMessage }}</p>
     <article v-if="dream" class="card" style="padding:16px">
       <header style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div>
-          <h2 style="margin:0">{{ dream.title || 'Untitled dream' }}</h2>
+          <h2 style="margin:0">{{ dream.title || '未命名梦境' }}</h2>
           <small class="muted">{{ new Date(dream.date || dream.createdAt).toLocaleString() }}</small>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="button" @click="editDream">Edit</button>
-          <button class="button danger" @click="removeDream">Delete</button>
+          <button class="button" @click="editDream">编辑</button>
+          <button class="button danger" @click="removeDream">删除</button>
         </div>
       </header>
-      <p v-if="dream.tags?.length" class="muted">Tags: {{ dream.tags.join(', ') }}</p>
+      <p v-if="dream.tags?.length" class="muted">标签：{{ dream.tags.join(', ') }}</p>
       <p class="muted">可见性：{{ dream.is_public ? '公开' : '私密' }} · 赞 {{ likes }}</p>
       <pre style="white-space:pre-wrap;line-height:1.8;background:transparent;border:none;margin:0;padding:0">{{ dream.content }}</pre>
       <div style="display:flex;gap:8px;margin-top:12px">

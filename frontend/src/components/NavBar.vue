@@ -11,7 +11,7 @@ import { AuthApi } from '../services/api'
         <RouterLink :to="{ name: 'dreams' }" style="text-decoration:none;color:var(--text)"><strong>🌙 Dream Diary</strong></RouterLink>
         <RouterLink :to="{ name: 'public-feed' }">广场</RouterLink>
         <RouterLink v-if="isAuthenticated" :to="{ name: 'dreams' }">我的梦境</RouterLink>
-        <RouterLink v-if="isAuthenticated" :to="{ name: 'dream-new' }">New</RouterLink>
+        <RouterLink v-if="isAuthenticated" :to="{ name: 'dream-new' }">新建</RouterLink>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <template v-if="isAuthenticated">
