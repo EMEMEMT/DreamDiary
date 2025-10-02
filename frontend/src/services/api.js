@@ -51,8 +51,10 @@ export const AuthApi = {
 };
 
 export const PublicApi = {
-  listPublicDreams() {
-    return request('/public/dreams');
+  listPublicDreams(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    const search = q ? `?${q}` : '';
+    return request(`/public/dreams${search}`);
   },
   getPublicDream(id) {
     return request(`/public/dreams/${id}`);
@@ -83,6 +85,15 @@ export const CommentsApi = {
 export const UsersApi = {
   me() { return request('/users/me'); },
   publicDreams(userId) { return request(`/users/${userId}/public-dreams`); }
+};
+
+export const TagsApi = {
+  listTags() {
+    return request('/tags');
+  },
+  createTag(name) {
+    return request('/tags', { method: 'POST', body: JSON.stringify({ name }) });
+  }
 };
 
 export default DreamApi;

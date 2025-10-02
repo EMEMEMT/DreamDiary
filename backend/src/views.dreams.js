@@ -6,7 +6,23 @@ export const dreamsRouter = Router()
 // list
 dreamsRouter.get('/', async (req, res) => {
   const db = await getDb()
-  const rows = db.all('SELECT * FROM dreams WHERE user_id = ? ORDER BY date DESC NULLS LAST, created_at DESC', req.userId)
+  const { tag } = req.query
+  
+  let rows
+  if (tag) {
+    // 按标签筛选梦境
+    rows = db.all(`
+      SELECT DISTINCT d.* FROM dreams d
+      JOIN dream_tags dt ON dt.dream_id = d.id
+      JOIN tags t ON t.id = dt.tag_id
+      WHERE d.user_id = ? AND t.name = ?
+      ORDER BY d.date DESC NULLS LAST, d.created_at DESC
+    `, req.userId, tag)
+  } else {
+    // 获取所有梦境
+    rows = db.all('SELECT * FROM dreams WHERE user_id = ? ORDER BY date DESC NULLS LAST, created_at DESC', req.userId)
+  }
+  
   // join tags
   const dreamIds = rows.map(r => r.id)
   const tagRows = dreamIds.length ? db.all(`
@@ -68,15 +84,48 @@ dreamsRouter.put('/:id', async (req, res) => {
 export const publicDreamsRouter = Router()
 publicDreamsRouter.get('/', async (req, res) => {
   const db = await getDb()
-  const rows = db.all(`
-    SELECT d.*, u.email as author_email, u.username as author_username,
-      (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
-      (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
-    FROM dreams d JOIN users u ON u.id = d.user_id
-    WHERE d.is_public = 1
-    ORDER BY d.date DESC NULLS LAST, d.created_at DESC
-  `)
-  res.json(rows)
+  const { tag } = req.query
+  
+  let rows
+  if (tag) {
+    // 按标签筛选公开梦境
+    rows = db.all(`
+      SELECT DISTINCT d.*, u.email as author_email, u.username as author_username,
+        (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
+        (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
+      FROM dreams d 
+      JOIN users u ON u.id = d.user_id
+      JOIN dream_tags dt ON dt.dream_id = d.id
+      JOIN tags t ON t.id = dt.tag_id
+      WHERE d.is_public = 1 AND t.name = ?
+      ORDER BY d.date DESC NULLS LAST, d.created_at DESC
+    `, tag)
+  } else {
+    // 获取所有公开梦境
+    rows = db.all(`
+      SELECT d.*, u.email as author_email, u.username as author_username,
+        (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
+        (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
+      FROM dreams d JOIN users u ON u.id = d.user_id
+      WHERE d.is_public = 1
+      ORDER BY d.date DESC NULLS LAST, d.created_at DESC
+    `)
+  }
+  
+  // 为公开梦境添加标签信息
+  const dreamIds = rows.map(r => r.id)
+  const tagRows = dreamIds.length ? db.all(`
+    SELECT dt.dream_id, t.name FROM dream_tags dt
+    JOIN tags t ON t.id = dt.tag_id
+    WHERE dt.dream_id IN (${dreamIds.map(() => '?').join(',')})
+  `, ...dreamIds) : []
+  const idToTags = new Map()
+  for (const tr of tagRows) {
+    if (!idToTags.has(tr.dream_id)) idToTags.set(tr.dream_id, [])
+    idToTags.get(tr.dream_id).push(tr.name)
+  }
+  const data = rows.map(r => ({ ...r, tags: idToTags.get(r.id) || [] }))
+  res.json(data)
 })
 
 // public dream detail

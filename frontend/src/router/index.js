@@ -7,6 +7,7 @@ import Register from '../pages/Register.vue'
 import { isAuthenticated } from '../stores/auth'
 import PublicFeed from '../pages/PublicFeed.vue'
 import Profile from '../pages/Profile.vue'
+import TagBrowser from '../pages/TagBrowser.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,6 +16,7 @@ const router = createRouter({
     { path: '/login', name: 'login', component: Login, meta: { public: true } },
     { path: '/register', name: 'register', component: Register, meta: { public: true } },
     { path: '/public', name: 'public-feed', component: PublicFeed, meta: { public: true } },
+    { path: '/tags', name: 'tags', component: TagBrowser, meta: { public: true } },
     { path: '/me', name: 'profile', component: Profile },
     { path: '/dreams', name: 'dreams', component: DreamList },
     { path: '/dreams/new', name: 'dream-new', component: DreamForm },

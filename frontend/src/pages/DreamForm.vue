@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DreamApi } from '../services/api'
+import { DreamApi, TagsApi } from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,6 +16,8 @@ const date = ref(new Date().toISOString().slice(0, 10))
 const content = ref('')
 const tags = ref('')
 const isPublic = ref(false)
+const availableTags = ref([])
+const showTagSuggestions = ref(false)
 
 async function load() {
   if (!isEditing.value) return
@@ -32,6 +34,23 @@ async function load() {
   } finally {
     isLoading.value = false
   }
+}
+
+async function loadTags() {
+  try {
+    availableTags.value = await TagsApi.listTags()
+  } catch (err) {
+    console.error('加载标签失败:', err)
+  }
+}
+
+function addTag(tagName) {
+  const currentTags = tags.value.split(',').map(s => s.trim()).filter(Boolean)
+  if (!currentTags.includes(tagName)) {
+    currentTags.push(tagName)
+    tags.value = currentTags.join(', ')
+  }
+  showTagSuggestions.value = false
 }
 
 async function save() {
@@ -58,7 +77,10 @@ async function save() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadTags()
+})
 </script>
 
 <template>
@@ -78,7 +100,37 @@ onMounted(load)
       </label>
       <label>
         <span class="muted">标签（用逗号分隔）</span>
-        <input class="input" v-model="tags" type="text" placeholder="清醒梦, 飞行" />
+        <div class="tag-input-container">
+          <input 
+            class="input" 
+            v-model="tags" 
+            type="text" 
+            placeholder="清醒梦, 飞行" 
+            @focus="showTagSuggestions = true"
+          />
+          <button 
+            type="button" 
+            class="button" 
+            @click="showTagSuggestions = !showTagSuggestions"
+            style="margin-left: 8px;"
+          >
+            {{ showTagSuggestions ? '隐藏' : '显示' }}建议
+          </button>
+        </div>
+        <div v-if="showTagSuggestions && availableTags.length" class="tag-suggestions">
+          <span class="muted" style="font-size: 0.85em;">点击添加常用标签：</span>
+          <div class="suggestion-tags">
+            <button 
+              v-for="tag in availableTags.slice(0, 10)" 
+              :key="tag.id"
+              type="button"
+              class="suggestion-tag"
+              @click="addTag(tag.name)"
+            >
+              {{ tag.name }} ({{ tag.usage }})
+            </button>
+          </div>
+        </div>
       </label>
       <label>
         <span class="muted">内容</span>
@@ -99,6 +151,44 @@ onMounted(load)
 
 <style scoped>
 label { display: grid; gap: 6px; }
+
+.tag-input-container {
+  display: flex;
+  align-items: center;
+}
+
+.tag-suggestions {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.suggestion-tag {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--elev);
+  color: var(--muted);
+  padding: 4px 8px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s ease;
+}
+
+.suggestion-tag:hover {
+  background: var(--primary);
+  color: #0b1020;
+  border-color: var(--primary);
+}
 </style>
 
 

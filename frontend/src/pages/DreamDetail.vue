@@ -63,6 +63,10 @@ async function addComment() {
   } catch (e) { /* ignore */ }
 }
 
+function viewTagDreams(tagName) {
+  router.push({ name: 'dreams', query: { tag: tagName } })
+}
+
 onMounted(load)
 </script>
 
@@ -81,7 +85,17 @@ onMounted(load)
           <button class="button danger" @click="removeDream">删除</button>
         </div>
       </header>
-      <p v-if="dream.tags?.length" class="muted">标签：{{ dream.tags.join(', ') }}</p>
+      <div v-if="dream.tags?.length" class="dream-tags-section">
+        <span class="muted">标签：</span>
+        <span 
+          v-for="tag in dream.tags" 
+          :key="tag"
+          class="dream-tag"
+          @click="viewTagDreams(tag)"
+        >
+          {{ tag }}
+        </span>
+      </div>
       <p class="muted">可见性：{{ dream.is_public ? '公开' : '私密' }} · 赞 {{ likes }}</p>
       <pre style="white-space:pre-wrap;line-height:1.8;background:transparent;border:none;margin:0;padding:0">{{ dream.content }}</pre>
       <div style="display:flex;gap:8px;margin-top:12px">
@@ -108,6 +122,30 @@ onMounted(load)
 </template>
 
 <style scoped>
+.dream-tags-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.dream-tag {
+  background: var(--elev);
+  color: var(--muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.dream-tag:hover {
+  background: var(--primary);
+  color: #0b1020;
+  border-color: var(--primary);
+}
 </style>
 
 
