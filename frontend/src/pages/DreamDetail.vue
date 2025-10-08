@@ -76,9 +76,19 @@ onMounted(load)
     <p v-if="errorMessage" style="color:var(--danger)">{{ errorMessage }}</p>
     <article v-if="dream" class="card" style="padding:16px">
       <header style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <div>
-          <h2 style="margin:0">{{ dream.title || '未命名梦境' }}</h2>
-          <small class="muted">{{ new Date(dream.date || dream.createdAt).toLocaleString() }}</small>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div v-if="dream.author_avatar" class="avatar">
+            <img :src="`http://localhost:3000${dream.author_avatar}`" :alt="dream.author_username || dream.author_email" />
+          </div>
+          <div v-else class="avatar-placeholder">
+            {{ (dream.author_username || dream.author_email || 'U').charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <h2 style="margin:0">{{ dream.title || '未命名梦境' }}</h2>
+            <small class="muted">
+              {{ dream.author_username || dream.author_email }} · {{ new Date(dream.date || dream.createdAt).toLocaleString() }}
+            </small>
+          </div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="button" @click="editDream">编辑</button>
@@ -109,10 +119,20 @@ onMounted(load)
         </div>
         <ul class="list">
           <li v-for="c in comments" :key="c.id" class="card list-item">
-            <div style="display:flex;justify-content:space-between;gap:8px">
-              <span class="muted">{{ c.author_username || c.author_email }} · {{ new Date(c.created_at).toLocaleString() }}</span>
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <div v-if="c.author_avatar" class="avatar small">
+                <img :src="`http://localhost:3000${c.author_avatar}`" :alt="c.author_username || c.author_email" />
+              </div>
+              <div v-else class="avatar-placeholder small">
+                {{ (c.author_username || c.author_email || 'U').charAt(0).toUpperCase() }}
+              </div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;gap:8px">
+                  <span class="muted">{{ c.author_username || c.author_email }} · {{ new Date(c.created_at).toLocaleString() }}</span>
+                </div>
+                <div style="margin-top:6px">{{ c.content }}</div>
+              </div>
             </div>
-            <div style="margin-top:6px">{{ c.content }}</div>
           </li>
         </ul>
       </section>
@@ -145,6 +165,45 @@ onMounted(load)
   background: var(--primary);
   color: #0b1020;
   border-color: var(--primary);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar.small {
+  width: 32px;
+  height: 32px;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #0b1020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.avatar-placeholder.small {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
 }
 </style>
 

@@ -126,6 +126,15 @@ function migrate(db) {
       }
     }
   } catch {}
+
+  // 兼容旧库：users 添加 avatar_url 字段
+  try {
+    const userCols = db.prepare(`PRAGMA table_info(users)`).all()
+    const hasAvatarUrl = userCols.some(c => c.name === 'avatar_url')
+    if (!hasAvatarUrl) {
+      db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT;`)
+    }
+  } catch {}
 }
 
 export function serializeTags(arr) {

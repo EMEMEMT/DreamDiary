@@ -7,7 +7,7 @@ export const commentsRouter = Router()
 commentsRouter.get('/dream/:dreamId', async (req, res) => {
   const db = await getDb()
   const rows = db.all(`
-    SELECT c.*, u.email as author_email, u.username as author_username
+    SELECT c.*, u.email as author_email, u.username as author_username, u.avatar_url as author_avatar
     FROM comments c JOIN users u ON u.id = c.user_id
     WHERE c.dream_id = ?
     ORDER BY c.created_at ASC

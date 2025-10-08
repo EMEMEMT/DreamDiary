@@ -42,7 +42,12 @@ dreamsRouter.get('/', async (req, res) => {
 // get
 dreamsRouter.get('/:id', async (req, res) => {
   const db = await getDb()
-  const row = db.get('SELECT * FROM dreams WHERE id = ? AND user_id = ?', req.params.id, req.userId)
+  const row = db.get(`
+    SELECT d.*, u.username as author_username, u.avatar_url as author_avatar
+    FROM dreams d 
+    JOIN users u ON u.id = d.user_id
+    WHERE d.id = ? AND d.user_id = ?
+  `, req.params.id, req.userId)
   if (!row) return res.status(404).json({ message: 'not found' })
   const tags = db.all(`
     SELECT t.name FROM dream_tags dt JOIN tags t ON t.id = dt.tag_id
@@ -90,7 +95,7 @@ publicDreamsRouter.get('/', async (req, res) => {
   if (tag) {
     // 按标签筛选公开梦境
     rows = db.all(`
-      SELECT DISTINCT d.*, u.email as author_email, u.username as author_username,
+      SELECT DISTINCT d.*, u.email as author_email, u.username as author_username, u.avatar_url as author_avatar,
         (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
         (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
       FROM dreams d 
@@ -103,7 +108,7 @@ publicDreamsRouter.get('/', async (req, res) => {
   } else {
     // 获取所有公开梦境
     rows = db.all(`
-      SELECT d.*, u.email as author_email, u.username as author_username,
+      SELECT d.*, u.email as author_email, u.username as author_username, u.avatar_url as author_avatar,
         (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
         (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
       FROM dreams d JOIN users u ON u.id = d.user_id
@@ -132,7 +137,7 @@ publicDreamsRouter.get('/', async (req, res) => {
 publicDreamsRouter.get('/:id', async (req, res) => {
   const db = await getDb()
   const d = db.get(`
-    SELECT d.*, u.email as author_email, u.username as author_username,
+    SELECT d.*, u.email as author_email, u.username as author_username, u.avatar_url as author_avatar,
       (SELECT COUNT(1) FROM reactions r WHERE r.dream_id = d.id) as likes,
       (SELECT COUNT(1) FROM comments c WHERE c.dream_id = d.id) as comments
     FROM dreams d JOIN users u ON u.id = d.user_id

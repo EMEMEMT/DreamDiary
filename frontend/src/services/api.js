@@ -84,7 +84,25 @@ export const CommentsApi = {
 
 export const UsersApi = {
   me() { return request('/users/me'); },
-  publicDreams(userId) { return request(`/users/${userId}/public-dreams`); }
+  publicDreams(userId) { return request(`/users/${userId}/public-dreams`); },
+  getUser(userId) { return request(`/users/${userId}`); },
+  async uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken?.()}`
+      },
+      body: formData
+    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+    }
+    return response.json();
+  },
+  deleteAvatar() { return request('/users/me/avatar', { method: 'DELETE' }); }
 };
 
 export const TagsApi = {

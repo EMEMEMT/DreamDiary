@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import path from 'node:path'
 import { getDb } from './db.js'
 import { register, login, authMiddleware } from './auth.js'
 import { dreamsRouter, publicDreamsRouter } from './views.dreams.js'
@@ -17,6 +18,9 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }))
 app.use(express.json())
 app.use(cookieParser())
+
+// 静态文件服务 - 提供头像文件访问
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
 app.get('/health', (req, res) => res.json({ ok: true }))
 
