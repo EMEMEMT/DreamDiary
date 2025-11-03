@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3020';
 import { getToken, setAuth, clearAuth } from '../stores/auth';
 
 async function request(path, options = {}) {
@@ -33,6 +33,10 @@ export const DreamApi = {
   },
   deleteDream(id) {
     return request(`/dreams/${id}`, { method: 'DELETE' });
+  },
+  getMyStats(range = '7d') {
+    const q = new URLSearchParams({ range }).toString();
+    return request(`/dreams/stats?${q}`);
   }
 };
 
@@ -58,6 +62,10 @@ export const PublicApi = {
   },
   getPublicDream(id) {
     return request(`/public/dreams/${id}`);
+  },
+  getStats(range = '7d') {
+    const q = new URLSearchParams({ range }).toString();
+    return request(`/public/dreams/stats?${q}`);
   }
 };
 

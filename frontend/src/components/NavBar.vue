@@ -1,7 +1,19 @@
 <script setup>
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { isAuthenticated, currentUser } from '../stores/auth'
 import { AuthApi } from '../services/api'
+
+const theme = ref(localStorage.getItem('theme') || 'dark')
+function applyTheme(v) {
+  document.documentElement.setAttribute('data-theme', v)
+}
+function toggleTheme() {
+  theme.value = theme.value === 'dark' ? 'light' : 'dark'
+  localStorage.setItem('theme', theme.value)
+  applyTheme(theme.value)
+}
+onMounted(() => { applyTheme(theme.value) })
 </script>
 
 <template>
@@ -31,6 +43,12 @@ import { AuthApi } from '../services/api'
           <RouterLink :to="{ name: 'login' }" class="nav-link">登录</RouterLink>
           <RouterLink :to="{ name: 'register' }" class="nav-link nav-link-primary">注册</RouterLink>
         </template>
+        <label class="switch" title="切换主题" style="margin-left:8px">
+          <input type="checkbox" :checked="theme==='light'" @change="toggleTheme" />
+          <span class="slider">
+            <span class="icon">{{ theme === 'light' ? '☀️' : '🌙' }}</span>
+          </span>
+        </label>
       </div>
     </nav>
   </header>
@@ -173,6 +191,28 @@ import { AuthApi } from '../services/api'
 .button-logout {
   font-size: 0.85em;
   padding: 8px 12px;
+}
+
+/* 主题切换滑块 */
+.switch { position: relative; display:inline-block; width:56px; height:30px }
+.switch input { display:none }
+.slider {
+  position:absolute; inset:0; cursor:pointer; border-radius:999px; border:1px solid var(--border);
+  background: linear-gradient(145deg, var(--elev), var(--panel));
+  transition: background .2s ease, border-color .2s ease;
+  display:flex; align-items:center; padding:2px;
+}
+.slider .icon {
+  width: 26px; height: 26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background: var(--gradient-primary); color: #0a0e1a; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  transform: translateX(0); transition: transform .2s ease;
+}
+.switch input:checked + .slider .icon { transform: translateX(26px) }
+
+/* 亮色主题下的导航栏背景与阴影适配 */
+:global([data-theme='light']) .navbar {
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245,247,251,0.9));
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 </style>
 

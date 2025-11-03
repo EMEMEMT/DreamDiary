@@ -6,11 +6,13 @@ import { DreamApi, ReactionsApi, CommentsApi, PublicApi } from '../services/api'
 const route = useRoute()
 const router = useRouter()
 const id = route.params.id
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3020'
 
 const isLoading = ref(false)
 const errorMessage = ref('')
 const dream = ref(null)
 const likes = ref(0)
+const liked = ref(false)
 const comments = ref([])
 const commentText = ref('')
 
@@ -50,7 +52,13 @@ function editDream() {
 async function toggleLike() {
   try {
     const res = await ReactionsApi.toggleLike(id)
-    likes.value += res?.liked ? 1 : -1
+    if (res?.liked) {
+      likes.value += 1
+      liked.value = true
+    } else {
+      likes.value = Math.max(0, likes.value - 1)
+      liked.value = false
+    }
   } catch (e) { /* ignore */ }
 }
 
@@ -78,7 +86,7 @@ onMounted(load)
       <header style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div style="display:flex;align-items:center;gap:12px">
           <div v-if="dream.author_avatar" class="avatar">
-            <img :src="`http://localhost:3000${dream.author_avatar}`" :alt="dream.author_username || dream.author_email" />
+            <img :src="`${API_BASE}${dream.author_avatar}`" :alt="dream.author_username || dream.author_email" />
           </div>
           <div v-else class="avatar-placeholder">
             {{ (dream.author_username || dream.author_email || 'U').charAt(0).toUpperCase() }}
@@ -90,7 +98,10 @@ onMounted(load)
             </small>
           </div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge" title="点赞数" style="display:flex;align-items:center;gap:6px">
+            ❤️ <strong style="font-size:0.95em">{{ likes }}</strong>
+          </span>
           <button class="button" @click="editDream">编辑</button>
           <button class="button danger" @click="removeDream">删除</button>
         </div>
@@ -106,10 +117,12 @@ onMounted(load)
           {{ tag }}
         </span>
       </div>
-      <p class="muted">可见性：{{ dream.is_public ? '公开' : '私密' }} · 赞 {{ likes }}</p>
-      <pre style="white-space:pre-wrap;line-height:1.8;background:transparent;border:none;margin:0;padding:0">{{ dream.content }}</pre>
+      <p class="muted">可见性：{{ dream.is_public ? '公开' : '私密' }}</p>
+      <pre class="dream-content">{{ dream.content }}</pre>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="button" @click="toggleLike">点赞</button>
+        <button class="icon-button" :class="{ liked }" @click="toggleLike" :title="liked ? '已点赞' : '点赞'">
+          <span>{{ liked ? '❤️' : '🤍' }}</span>
+        </button>
       </div>
       <section style="margin-top:16px">
         <h3 style="margin:8px 0">评论</h3>
@@ -121,7 +134,7 @@ onMounted(load)
           <li v-for="c in comments" :key="c.id" class="card list-item">
             <div style="display:flex;align-items:flex-start;gap:12px">
               <div v-if="c.author_avatar" class="avatar small">
-                <img :src="`http://localhost:3000${c.author_avatar}`" :alt="c.author_username || c.author_email" />
+                <img :src="`${API_BASE}${c.author_avatar}`" :alt="c.author_username || c.author_email" />
               </div>
               <div v-else class="avatar-placeholder small">
                 {{ (c.author_username || c.author_email || 'U').charAt(0).toUpperCase() }}
@@ -142,6 +155,28 @@ onMounted(load)
 </template>
 
 <style scoped>
+.dream-content {
+  white-space: pre-wrap;
+  line-height: 1.95;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font-size: 1.05em;
+  letter-spacing: 0.2px;
+}
+
+.icon-button {
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+  background: linear-gradient(145deg, var(--elev), var(--panel)); color: #e25555;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: all .2s ease;
+}
+.icon-button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.28); border-color: var(--primary) }
+.icon-button span { font-size: 18px; line-height: 1 }
+.icon-button.liked { color: #ef4444; border-color: rgba(239,68,68,0.5); box-shadow: 0 2px 8px rgba(239,68,68,0.25) }
+
 .dream-tags-section {
   display: flex;
   align-items: center;
@@ -205,6 +240,9 @@ onMounted(load)
   height: 32px;
   font-size: 14px;
 }
+
+/* 确保按钮文字水平排列 */
+.button { white-space: nowrap }
 </style>
 
 

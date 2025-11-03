@@ -39,6 +39,39 @@ dreamsRouter.get('/', async (req, res) => {
   res.json(data)
 })
 
+// 个人统计（需登录）：频率与标签占比（注意：需放在 '/:id' 之前）
+dreamsRouter.get('/stats', async (req, res) => {
+  const db = await getDb()
+  const range = normalizeRange(req.query.range)
+  const { start, end } = computeRange(range)
+
+  const freqRows = db.all(
+    `SELECT DATE(COALESCE(d.date, d.created_at)) as day, COUNT(1) as cnt
+     FROM dreams d
+     WHERE d.user_id = ? AND DATE(COALESCE(d.date, d.created_at)) BETWEEN ? AND ?
+     GROUP BY day
+     ORDER BY day ASC`,
+    req.userId, start, end
+  )
+  const frequency = fillDateSeries(start, end, freqRows)
+
+  const tagRows = db.all(
+    `SELECT t.name as name, COUNT(1) as value
+     FROM dreams d
+     JOIN dream_tags dt ON dt.dream_id = d.id
+     JOIN tags t ON t.id = dt.tag_id
+     WHERE d.user_id = ? AND DATE(COALESCE(d.date, d.created_at)) BETWEEN ? AND ?
+     GROUP BY t.name
+     ORDER BY value DESC`,
+    req.userId, start, end
+  )
+  const tags = topNWithOthers(tagRows, 10)
+
+  res.json({ scope: 'me', range, start, end, frequency, tags })
+})
+
+// 已上移到 '/stats'（见文件上方）
+
 // get
 dreamsRouter.get('/:id', async (req, res) => {
   const db = await getDb()
@@ -133,6 +166,39 @@ publicDreamsRouter.get('/', async (req, res) => {
   res.json(data)
 })
 
+// 公共统计（无需登录）：频率与标签占比
+publicDreamsRouter.get('/stats', async (req, res) => {
+  const db = await getDb()
+  const range = normalizeRange(req.query.range)
+  const { start, end } = computeRange(range)
+
+  // 频率：按天统计公开梦境
+  const freqRows = db.all(
+    `SELECT DATE(COALESCE(d.date, d.created_at)) as day, COUNT(1) as cnt
+     FROM dreams d
+     WHERE d.is_public = 1 AND DATE(COALESCE(d.date, d.created_at)) BETWEEN ? AND ?
+     GROUP BY day
+     ORDER BY day ASC`,
+    start, end
+  )
+  const frequency = fillDateSeries(start, end, freqRows)
+
+  // 标签分布：统计范围内公开梦境的标签计数
+  const tagRows = db.all(
+    `SELECT t.name as name, COUNT(1) as value
+     FROM dreams d
+     JOIN dream_tags dt ON dt.dream_id = d.id
+     JOIN tags t ON t.id = dt.tag_id
+     WHERE d.is_public = 1 AND DATE(COALESCE(d.date, d.created_at)) BETWEEN ? AND ?
+     GROUP BY t.name
+     ORDER BY value DESC`,
+    start, end
+  )
+  const tags = topNWithOthers(tagRows, 10)
+
+  res.json({ scope: 'public', range, start, end, frequency, tags })
+})
+
 // public dream detail
 publicDreamsRouter.get('/:id', async (req, res) => {
   const db = await getDb()
@@ -159,6 +225,8 @@ dreamsRouter.delete('/:id', async (req, res) => {
   res.status(204).send()
 })
 
+// （已移动到文件前部，避免被 '/:id' 截获）
+
 function upsertTags(db, dreamId, tags) {
   for (const name of tags) {
     const row = db.get('SELECT id FROM tags WHERE name = ?', name)
@@ -170,6 +238,59 @@ function upsertTags(db, dreamId, tags) {
 function replaceTags(db, dreamId, tags) {
   db.run('DELETE FROM dream_tags WHERE dream_id = ?', dreamId)
   upsertTags(db, dreamId, tags)
+}
+
+
+// ------- 辅助函数（仅本文件使用） -------
+function normalizeRange(raw) {
+  const v = String(raw || '').toLowerCase()
+  if (v === '7d' || v === '7') return '7d'
+  if (v === '30d' || v === '30') return '30d'
+  if (v === '1y' || v === '365d' || v === 'year') return '1y'
+  return '7d'
+}
+
+function computeRange(range) {
+  const endDate = new Date()
+  endDate.setHours(0, 0, 0, 0)
+  const startDate = new Date(endDate)
+  if (range === '30d') startDate.setDate(startDate.getDate() - 29)
+  else if (range === '1y') startDate.setDate(startDate.getDate() - 364)
+  else startDate.setDate(startDate.getDate() - 6)
+  return { start: toYMD(startDate), end: toYMD(endDate) }
+}
+
+function toYMD(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function addOneDayStr(s) {
+  const [y, m, d] = s.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() + 1)
+  return toYMD(dt)
+}
+
+function fillDateSeries(start, end, rows) {
+  const map = new Map(rows.map(r => [r.day, Number(r.cnt) || 0]))
+  const series = []
+  for (let cur = start; ; cur = addOneDayStr(cur)) {
+    series.push({ date: cur, count: map.get(cur) || 0 })
+    if (cur === end) break
+  }
+  return series
+}
+
+function topNWithOthers(rows, n) {
+  const list = rows.map(r => ({ name: r.name, value: Number(r.value) || 0 }))
+  list.sort((a, b) => b.value - a.value)
+  const top = list.slice(0, n)
+  const othersVal = list.slice(n).reduce((s, x) => s + x.value, 0)
+  if (othersVal > 0) top.push({ name: '其他', value: othersVal })
+  return top
 }
 
 

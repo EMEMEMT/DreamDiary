@@ -2,6 +2,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { PublicApi, TagsApi } from '../services/api'
+import AnalyticsPanel from '../components/AnalyticsPanel.vue'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3020'
 
 const router = useRouter()
 const route = useRoute()
@@ -68,6 +71,9 @@ onMounted(() => {
       <h2 style="margin:0">公开梦境</h2>
     </div>
 
+    <!-- 数据分析面板：全站/我的 + 时间范围 -->
+    <AnalyticsPanel initialScope="public" initialRange="7d" />
+
     <!-- 标签筛选区域 -->
     <div class="filter-section" v-if="tags.length">
       <div class="filter-header">
@@ -101,26 +107,36 @@ onMounted(() => {
     
     <ul v-if="!isLoading && items.length" class="list">
       <li v-for="d in items" :key="d.id" class="card list-item" @click="openDetail(d.id)">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-          <div style="min-width:0">
-            <div style="display:flex;align-items:center;gap:8px;min-width:0">
-              <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title || '未命名梦境' }}</strong>
-              <small class="muted">{{ new Date(d.date || d.created_at).toLocaleDateString() }}</small>
+        <div style="display:flex;gap:14px">
+          <div style="flex-shrink:0" class="avatar">
+            <img v-if="d.author_avatar" :src="`${API_BASE}${d.author_avatar}`" :alt="d.author_username || d.author_email">
+            <span v-else>{{ (d.author_username || d.author_email || 'U').charAt(0).toUpperCase() }}</span>
+          </div>
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+              <div style="min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                  <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:1.05em">{{ d.title || '未命名梦境' }}</strong>
+                  <small class="muted">{{ new Date(d.date || d.created_at).toLocaleDateString() }}</small>
+                </div>
+                <div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">by {{ d.author_username || d.author_email }}</div>
+              </div>
+              <div class="badges">
+                <span class="badge">赞 {{ d.likes }}</span>
+                <span class="badge">评论 {{ d.comments }}</span>
+              </div>
             </div>
-            <div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">by {{ d.author_username || d.author_email }} · 赞 {{ d.likes }} · 评论 {{ d.comments }}</div>
-            <!-- 显示梦境的标签 -->
-            <div v-if="d.tags && d.tags.length" class="dream-tags">
+            <div v-if="d.tags && d.tags.length" class="dream-tags" style="margin-top:8px">
               <span 
                 v-for="tag in d.tags" 
                 :key="tag"
                 class="dream-tag"
                 @click.stop="onTagClick(tag)"
               >
-                {{ tag }}
+                # {{ tag }}
               </span>
             </div>
           </div>
-          <span class="muted" style="font-size:12px">查看 ›</span>
         </div>
       </li>
     </ul>
@@ -133,6 +149,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--elev);
+  display:flex;align-items:center;justify-content:center;
+  color: var(--text);
+  font-weight: 600;
+}
+.avatar img { width:100%; height:100%; object-fit: cover }
 .filter-section {
   margin: 20px 0;
   padding: 16px;

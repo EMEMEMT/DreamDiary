@@ -8,6 +8,7 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const isUploading = ref(false)
 const fileInput = ref(null)
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3020'
 
 async function load() {
   isLoading.value = true
@@ -82,7 +83,7 @@ onMounted(load)
     <div v-if="me" class="card" style="padding:16px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
         <div class="avatar-large">
-          <img v-if="me.avatar_url" :src="`http://localhost:3000${me.avatar_url}`" :alt="me.username || me.email" />
+          <img v-if="me.avatar_url" :src="`${API_BASE}${me.avatar_url}`" :alt="me.username || me.email" />
           <div v-else class="avatar-placeholder-large">
             {{ (me.username || me.email || 'U').charAt(0).toUpperCase() }}
           </div>
