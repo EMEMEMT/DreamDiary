@@ -157,6 +157,16 @@ label { display: grid; gap: 6px; }
   align-items: center;
 }
 
+.tag-input-container .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tag-input-container .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .tag-suggestions {
   margin-top: 8px;
   padding: 12px;
