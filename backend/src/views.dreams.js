@@ -222,6 +222,8 @@ dreamsRouter.delete('/:id', async (req, res) => {
   const db = await getDb()
   const ret = db.run('DELETE FROM dreams WHERE id = ? AND user_id = ?', req.params.id, req.userId)
   if (ret.changes === 0) return res.status(404).json({ message: 'not found' })
+  // 清理孤立标签
+  cleanupOrphanTags(db)
   res.status(204).send()
 })
 
@@ -238,6 +240,7 @@ function upsertTags(db, dreamId, tags) {
 function replaceTags(db, dreamId, tags) {
   db.run('DELETE FROM dream_tags WHERE dream_id = ?', dreamId)
   upsertTags(db, dreamId, tags)
+  cleanupOrphanTags(db)
 }
 
 
@@ -291,6 +294,18 @@ function topNWithOthers(rows, n) {
   const othersVal = list.slice(n).reduce((s, x) => s + x.value, 0)
   if (othersVal > 0) top.push({ name: '其他', value: othersVal })
   return top
+}
+
+// 删除未被任何梦境引用的标签
+function cleanupOrphanTags(db) {
+  db.run(`
+    DELETE FROM tags
+    WHERE id IN (
+      SELECT t.id FROM tags t
+      LEFT JOIN dream_tags dt ON dt.tag_id = t.id
+      WHERE dt.tag_id IS NULL
+    )
+  `)
 }
 
 
