@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DreamApi, ReactionsApi, CommentsApi, PublicApi } from '../services/api'
+import { DreamApi, ReactionsApi, CommentsApi, PublicApi, AiApi } from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +15,9 @@ const likes = ref(0)
 const liked = ref(false)
 const comments = ref([])
 const commentText = ref('')
+const aiLoading = ref(false)
+const aiText = ref('')
+const aiError = ref('')
 
 async function load() {
   isLoading.value = true
@@ -75,6 +78,21 @@ function viewTagDreams(tagName) {
   router.push({ name: 'dreams', query: { tag: tagName } })
 }
 
+async function interpretByAI() {
+  if (!dream.value?.content) return
+  aiLoading.value = true
+  aiError.value = ''
+  aiText.value = ''
+  try {
+    const res = await AiApi.interpret(dream.value.content, dream.value.tags || [])
+    aiText.value = res?.interpretation || ''
+  } catch (e) {
+    aiError.value = e?.message || 'AI 解读失败'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -119,11 +137,20 @@ onMounted(load)
       </div>
       <p class="muted">可见性：{{ dream.is_public ? '公开' : '私密' }}</p>
       <pre class="dream-content">{{ dream.content }}</pre>
-      <div style="display:flex;gap:8px;margin-top:12px">
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <button class="icon-button" :class="{ liked }" @click="toggleLike" :title="liked ? '已点赞' : '点赞'">
           <span>{{ liked ? '❤️' : '🤍' }}</span>
         </button>
+        <button class="button" @click="interpretByAI" :disabled="aiLoading">
+          {{ aiLoading ? 'AI 正在解读...' : 'AI 解梦' }}
+        </button>
       </div>
+      <section v-if="aiText || aiError || aiLoading" class="card" style="margin-top:12px;padding:12px">
+        <h3 style="margin:8px 0">AI 解梦</h3>
+        <p v-if="aiLoading" class="muted">正在生成解读，请稍候...</p>
+        <p v-if="aiError" style="color:var(--danger)">{{ aiError }}</p>
+        <div v-if="aiText" style="white-space:pre-wrap;line-height:1.8">{{ aiText }}</div>
+      </section>
       <section style="margin-top:16px">
         <h3 style="margin:8px 0">评论</h3>
         <div style="display:flex;gap:8px;margin:8px 0">

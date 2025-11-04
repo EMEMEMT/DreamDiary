@@ -122,6 +122,12 @@ export const TagsApi = {
   }
 };
 
+export const AiApi = {
+  interpret(content, tags = []) {
+    return request('/ai/interpret', { method: 'POST', body: JSON.stringify({ content, tags }) });
+  }
+};
+
 export default DreamApi;
 
 

@@ -10,6 +10,7 @@ import { tagsRouter } from './views.tags.js'
 import { reactionsRouter } from './views.reactions.js'
 import { commentsRouter } from './views.comments.js'
 import { usersRouter } from './views.users.js'
+import { aiRouter } from './views.ai.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -33,6 +34,7 @@ app.use('/tags', authMiddleware, tagsRouter)
 app.use('/comments', authMiddleware, commentsRouter)
 app.use('/reactions', authMiddleware, reactionsRouter)
 app.use('/users', authMiddleware, usersRouter)
+app.use('/ai', authMiddleware, aiRouter)
 
 app.use((req, res) => res.status(404).json({ message: 'not found' }))
 
