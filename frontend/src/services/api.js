@@ -75,6 +75,9 @@ export const ReactionsApi = {
   },
   getLikes(dreamId) {
     return request(`/reactions/count/${dreamId}`);
+  },
+  isLiked(dreamId) {
+    return request(`/reactions/liked/${dreamId}`);
   }
 };
 

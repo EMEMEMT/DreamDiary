@@ -30,6 +30,14 @@ async function load() {
     }
     const likeData = await ReactionsApi.getLikes(id)
     likes.value = likeData?.likes || 0
+    // 查询当前用户是否已点赞（需登录）
+    try {
+      const likedRes = await ReactionsApi.isLiked(id)
+      liked.value = !!likedRes?.liked
+    } catch (_) {
+      // 未登录或公开查看时忽略
+      liked.value = false
+    }
     comments.value = await CommentsApi.listByDream(id)
   } catch (err) {
     errorMessage.value = err?.message || '加载失败'

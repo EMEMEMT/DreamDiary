@@ -24,4 +24,12 @@ reactionsRouter.get('/count/:dreamId', async (req, res) => {
   res.json({ likes: row?.n || 0 })
 })
 
+// whether current user liked
+reactionsRouter.get('/liked/:dreamId', async (req, res) => {
+  const db = await getDb()
+  const existing = db.get('SELECT 1 FROM reactions WHERE dream_id = ? AND user_id = ? AND type = ?',
+    req.params.dreamId, req.userId, 'like')
+  res.json({ liked: !!existing })
+})
+
 
