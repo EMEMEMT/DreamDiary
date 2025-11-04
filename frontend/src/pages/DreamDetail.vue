@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { DreamApi, ReactionsApi, CommentsApi, PublicApi, AiApi } from '../services/api'
+import { currentUser } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -123,6 +124,13 @@ async function interpretByAI() {
 }
 
 onMounted(load)
+
+const isOwner = computed(() => {
+  const u = currentUser?.value
+  const d = dream?.value
+  if (!u || !d) return false
+  return String(u.id) === String(d.user_id)
+})
 </script>
 
 <template>
@@ -149,8 +157,10 @@ onMounted(load)
           <span class="badge" title="点赞数" style="display:flex;align-items:center;gap:6px">
             ❤️ <strong style="font-size:0.95em">{{ likes }}</strong>
           </span>
-          <button class="button" @click="editDream">编辑</button>
-          <button class="button danger" @click="removeDream">删除</button>
+          <template v-if="isOwner">
+            <button class="button" @click="editDream">编辑</button>
+            <button class="button danger" @click="removeDream">删除</button>
+          </template>
         </div>
       </header>
       <div v-if="dream.tags?.length" class="dream-tags-section">
