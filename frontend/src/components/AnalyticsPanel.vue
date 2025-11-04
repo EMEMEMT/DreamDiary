@@ -71,9 +71,32 @@ function renderCharts(fresh = false) {
       tooltip: { trigger: 'item' },
       legend: { bottom: 0, textStyle: { color: '#9aa4b2' } },
       series: [{
-        name: '标签分布', type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: true,
+        name: '标签分布', type: 'pie',
+        center: ['50%', '44%'],
+        radius: ['42%', '60%'],
+        avoidLabelOverlap: true,
+        minAngle: 5,
+        minShowLabelAngle: 5,
         itemStyle: { borderRadius: 8, borderColor: '#0b1020', borderWidth: 2 },
-        label: { color: '#cbd5e1' },
+        label: {
+          color: '#cbd5e1',
+          show: true,
+          position: 'outer',
+          distance: 40,
+          formatter: '{b}: {d}%'
+        },
+        labelLine: {
+          show: true,
+          length: 20,
+          length2: 12,
+          minTurnAngle: 55,
+          smooth: true
+        },
+        labelLayout: params => ({
+          moveOverlap: 'shiftY',
+          hideOverlap: true
+        }),
+        emphasis: { scale: false },
         data
       }]
     })
@@ -150,9 +173,10 @@ function normalizeStats(input) {
 .chip.active { background: rgba(110,168,254,0.15); color:#cfe1ff; border-color: rgba(110,168,254,0.5) }
 .charts { display:grid; grid-template-columns: 1fr; gap:12px }
 @media (min-width: 960px) { .charts { grid-template-columns: 1fr 1fr } }
-.chart-card { position:relative; background: var(--elev); border: 1px solid var(--border); border-radius: 12px; padding: 12px }
+.chart-card { position:relative; background: var(--elev); border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow: hidden }
 .chart-title { font-weight:600; color:#dbe1ea; margin-bottom: 8px }
-.chart { width: 100%; height: 280px }
+.chart { width: 100%; height: 300px }
+.charts { margin-bottom: 12px }
 .loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#9aa4b2; backdrop-filter: blur(1px) }
 .error { color: var(--danger) }
 </style>

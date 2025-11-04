@@ -18,6 +18,7 @@ const commentText = ref('')
 const aiLoading = ref(false)
 const aiText = ref('')
 const aiError = ref('')
+const aiVisible = ref(true)
 
 async function load() {
   isLoading.value = true
@@ -172,8 +173,11 @@ onMounted(load)
         <button class="button" @click="interpretByAI" :disabled="aiLoading">
           {{ aiLoading ? 'AI 正在解读...' : 'AI 解梦' }}
         </button>
+        <button class="button" v-if="aiText || aiError" @click="aiVisible = !aiVisible">
+          {{ aiVisible ? '收起解读' : '显示解读' }}
+        </button>
       </div>
-      <section v-if="aiText || aiError || aiLoading" class="card" style="margin-top:12px;padding:12px">
+      <section v-show="(aiText || aiError || aiLoading) && aiVisible" class="card" style="margin-top:12px;padding:12px">
         <h3 style="margin:8px 0">AI 解梦</h3>
         <p v-if="aiLoading" class="muted">正在生成解读，请稍候...</p>
         <p v-if="aiError" style="color:var(--danger)">{{ aiError }}</p>
