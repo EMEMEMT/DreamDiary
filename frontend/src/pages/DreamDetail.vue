@@ -92,8 +92,28 @@ async function interpretByAI() {
   aiError.value = ''
   aiText.value = ''
   try {
-    const res = await AiApi.interpret(dream.value.content, dream.value.tags || [])
-    aiText.value = res?.interpretation || ''
+    // 使用流式接口，边下边显
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3020'
+    const token = localStorage.getItem('token')
+    const resp = await fetch(`${API_BASE}/ai/interpret/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ content: dream.value.content, tags: dream.value.tags || [] })
+    })
+    if (!resp.ok || !resp.body) {
+      const text = await resp.text().catch(() => '')
+      throw new Error(text || `HTTP ${resp.status}`)
+    }
+    const reader = resp.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      aiText.value += decoder.decode(value, { stream: true })
+    }
   } catch (e) {
     aiError.value = e?.message || 'AI 解读失败'
   } finally {

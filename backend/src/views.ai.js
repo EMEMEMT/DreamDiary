@@ -68,4 +68,98 @@ aiRouter.post('/interpret', async (req, res) => {
   }
 })
 
+// 流式解读：边生成边返回，提升首屏体验
+aiRouter.post('/interpret/stream', async (req, res) => {
+  try {
+    const { content, tags = [] } = req.body || {}
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({ message: 'content 必填' })
+    }
+    if (!LLM_BASE_URL || !LLM_API_KEY || !LLM_MODEL) {
+      return res.status(500).json({ message: '服务器未配置大模型环境变量' })
+    }
+
+    const systemPrompt = [
+      '你是一个专业的中文梦境解读助手，具备心理学与象征学素养。',
+      '请使用简洁小标题与分段，避免过长铺陈。',
+      '注意：非医疗建议，强调因人而异与自我观察。'
+    ].join('\n')
+
+    const userPrompt = [
+      `梦境内容：\n${content}`,
+      tags?.length ? `相关标签：${tags.join(', ')}` : ''
+    ].filter(Boolean).join('\n\n')
+
+    const url = `${LLM_BASE_URL.replace(/\/$/, '')}${LLM_COMPLETIONS_PATH}`
+
+    // 设定 SSE/流式响应头
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.setHeader('Transfer-Encoding', 'chunked')
+    res.setHeader('Cache-Control', 'no-cache')
+
+    const upstream = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LLM_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: LLM_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        stream: true
+      })
+    })
+
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text().catch(() => '')
+      res.statusCode = 502
+      res.end(`LLM 请求失败: ${upstream.status}\n${text}`)
+      return
+    }
+
+    const reader = upstream.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      // 逐行解析 OpenAI 兼容的流式 data: 事件
+      const lines = buffer.split(/\r?\n/)
+      buffer = lines.pop() || ''
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed) continue
+        if (trimmed === 'data: [DONE]') {
+          res.end()
+          return
+        }
+        if (trimmed.startsWith('data: ')) {
+          const jsonStr = trimmed.slice(6)
+          try {
+            const obj = JSON.parse(jsonStr)
+            const delta = obj?.choices?.[0]?.delta?.content
+            if (typeof delta === 'string' && delta.length) {
+              res.write(delta)
+            }
+          } catch {
+            // 忽略非 JSON 数据片段
+          }
+        }
+      }
+    }
+    // 尾部 flush
+    res.end()
+  } catch (err) {
+    console.error('AI interpret stream error:', err)
+    if (!res.headersSent) res.status(500).setHeader('Content-Type', 'application/json')
+    try { res.end(JSON.stringify({ message: '服务器错误' })) } catch {}
+  }
+})
+
 
